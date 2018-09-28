@@ -15,7 +15,6 @@ const (
 	defaultTimeout = 30 * time.Second
 )
 
-// VOTD represents an array of JSON responses returned back by the bible.org API
 type VOTD struct {
 	Bookname string `json:"bookname"`
 	Chapter  string `json:"chapter"`
