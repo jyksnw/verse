@@ -10,8 +10,7 @@ import (
 )
 
 const (
-	// apiURL         = "http://labs.bible.org/api/?passage=random&type=json"
-	apiURL         = "http://labs.bible.org/api/?passage=John%203:16-18&type=json"
+	apiURL         = "http://labs.bible.org/api/?passage=random&type=json"
 	defaultTimeout = 30 * time.Second
 )
 
