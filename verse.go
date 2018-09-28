@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	apiURL         = "http://labs.bible.org/api/?passage=random&type=json"
+	apiURL         = "http://labs.bible.org/api/?passage=votd&type=json"
 	defaultTimeout = 30 * time.Second
 )
 
