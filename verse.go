@@ -11,25 +11,25 @@ import (
 
 const (
 	apiURL         = "http://labs.bible.org/api/?passage=votd&type=json"
-	defaultTimeout = 30 * time.Second
+	defaultTimeout = 5 * time.Second
 )
 
-type VOTD struct {
+type verse struct {
 	Bookname string `json:"bookname"`
 	Chapter  string `json:"chapter"`
 	Verse    string `json:"verse"`
 	Text     string `json:"text"`
 }
 
-func (v VOTD) GetHeader() string {
+func (v verse) getHeader() string {
 	return v.Bookname + " " + v.Chapter + ":" + v.Verse
 }
 
-func (v VOTD) ToString(includeHeader bool) string {
+func (v verse) toString(includeHeader bool) string {
 	str := ""
 
 	if includeHeader {
-		str += v.GetHeader() + "\n"
+		str += v.getHeader() + "\n"
 	}
 
 	str += "\t(" + v.Verse + ") " + v.Text
@@ -37,23 +37,23 @@ func (v VOTD) ToString(includeHeader bool) string {
 	return str
 }
 
-type Verses []VOTD
+type votd []verse
 
-func (v Verses) ToString() string {
+func (v votd) toString() string {
 	numVerses := len(v)
 
 	if numVerses > 1 {
-		header := v[0].GetHeader() + "-" + v[numVerses-1].Verse + "\n"
+		header := v[0].getHeader() + "-" + v[numVerses-1].Verse + "\n"
 		text := ""
 
 		for t := range v {
-			text += v[t].ToString(false) + "\n"
+			text += v[t].toString(false) + "\n"
 		}
 
 		return header + text
 	}
 
-	return v[0].ToString(true)
+	return v[0].toString(true)
 }
 
 func main() {
@@ -83,7 +83,7 @@ func main() {
 		panic(err)
 	}
 
-	var votd Verses
+	var votd votd
 	json.Unmarshal(data, &votd)
-	fmt.Print(votd.ToString())
+	fmt.Print(votd.toString())
 }
