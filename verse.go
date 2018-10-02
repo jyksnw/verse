@@ -6,12 +6,19 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 )
 
 const (
 	apiURL         = "http://labs.bible.org/api/?passage=votd&type=json"
+	cacheDir       = ".verse"
 	defaultTimeout = 5 * time.Second
+)
+
+var (
+	fileName = time.Now().Local().Format("20060102")
 )
 
 type verse struct {
@@ -56,37 +63,98 @@ func (v votd) toString() string {
 	return v[0].toString(true)
 }
 
+func exists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+
+	return true, err
+}
+
+func checkError(err error) {
+	if err != nil {
+		// Fail without causing an error
+		fmt.Print("🚧 Could not load verse 🚧")
+		os.Exit(0)
+	}
+}
+
 func main() {
-	var netTransport = &http.Transport{
-		Dial: (&net.Dialer{
-			Timeout: defaultTimeout,
-		}).Dial,
-		TLSHandshakeTimeout: defaultTimeout,
-	}
-
-	var netClient = &http.Client{
-		Timeout:   defaultTimeout,
-		Transport: netTransport,
-	}
-
-	response, err := netClient.Get(apiURL)
+	ex, err := os.Executable()
 	if err != nil {
-		panic(err)
+		checkError(err)
 	}
 
-	if response.StatusCode < 200 || response.StatusCode >= 400 {
-		panic(response.Status)
-	}
-
-	data, err := ioutil.ReadAll(response.Body)
+	exPath := filepath.Dir(ex)
+	cache := exPath + string(os.PathSeparator) + cacheDir
+	exist, err := exists(cache)
 	if err != nil {
-		panic(err)
+		checkError(err)
+	}
+
+	if !exist {
+		err = os.Mkdir(cache, os.ModePerm)
+		if err != nil {
+			checkError(err)
+		}
+	}
+
+	cacheFile := cache + string(os.PathSeparator) + fileName
+	exist, err = exists(cacheFile)
+	if err != nil {
+		checkError(err)
 	}
 
 	var votd votd
-	err = json.Unmarshal(data, &votd)
-	if err != nil {
-		panic(err)
+
+	if exist {
+		data, err := ioutil.ReadFile(cacheFile)
+		if err != nil {
+			checkError(err)
+		}
+
+		err = json.Unmarshal(data, &votd)
+		if err != nil {
+			checkError(err)
+		}
+	} else {
+		var netTransport = &http.Transport{
+			Dial: (&net.Dialer{
+				Timeout: defaultTimeout,
+			}).Dial,
+			TLSHandshakeTimeout: defaultTimeout,
+		}
+
+		var netClient = &http.Client{
+			Timeout:   defaultTimeout,
+			Transport: netTransport,
+		}
+
+		response, err := netClient.Get(apiURL)
+		if err != nil {
+			checkError(err)
+		}
+
+		if response.StatusCode < 200 || response.StatusCode >= 400 {
+			panic(response.Status)
+		}
+
+		data, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			checkError(err)
+		}
+
+		err = json.Unmarshal(data, &votd)
+		if err != nil {
+			checkError(err)
+		}
+
+		_ = ioutil.WriteFile(cacheFile, data, os.ModePerm)
 	}
 
 	fmt.Print(votd.toString())
