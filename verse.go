@@ -84,6 +84,10 @@ func main() {
 	}
 
 	var votd votd
-	json.Unmarshal(data, &votd)
+	err = json.Unmarshal(data, &votd)
+	if err != nil {
+		panic(err)
+	}
+
 	fmt.Print(votd.toString())
 }
